@@ -4,6 +4,7 @@
   "description": "Serialization middleware using TypeScript as the schema.",
   "main": "dist/index.js",
   "scripts": {
+    "prepare": "npm run build",
     "clean": "rm -rf ./dist",
     "build": "npm run clean && tsc"
   },

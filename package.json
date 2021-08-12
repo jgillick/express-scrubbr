@@ -1,6 +1,6 @@
 {
   "name": "express-scrubbr",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Serialization middleware using TypeScript as the schema.",
   "main": "dist/index.js",
   "scripts": {

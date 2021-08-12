@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from "express";
 type MiddlewareRequestValues = {
   schemaName: string;
   config?: Scrubbr | ScrubbrOptions;
+  serialized: boolean;
 };
 
 /**
@@ -29,12 +30,20 @@ type MiddlewareRequestValues = {
 const scrubbrMiddleware =
   (defaultScrubbr: Scrubbr) =>
   (_req: Request, res: Response, next: NextFunction) => {
-    const sendFn = res.send;
     const jsonFn = res.json;
 
     const serialize = (data: unknown) => {
       const scrubbrContext: MiddlewareRequestValues = res.locals.scrubbr || {};
-      const { schemaName, config } = scrubbrContext;
+      const { schemaName, config, serialized } = scrubbrContext;
+
+      // Already serialized
+      if (serialized) {
+        return data;
+      }
+      res.locals.scrubbr = {
+        ...res.locals.scrubbr,
+        serialized: true,
+      };
 
       // No schema to serialize to
       if (!schemaName) {
@@ -54,13 +63,9 @@ const scrubbrMiddleware =
       res.locals.scrubbr = {
         schemaName,
         config,
+        serialized: false,
       };
       return res;
-    };
-    res.send = (data: unknown) => {
-      const serialized = serialize(data);
-      const stringified = JSON.stringify(serialized); // avoids duplicate calls
-      return sendFn.call(res, stringified);
     };
     res.json = (data: unknown) => {
       const serialized = serialize(data);

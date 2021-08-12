@@ -41,10 +41,10 @@ const scrubbrMiddleware =
         return data;
       }
 
-      let scrubbr: Scrubbr;
+      let scrubbr: Scrubbr = defaultScrubbr;
       if (config instanceof Scrubbr) {
         scrubbr = config;
-      } else {
+      } else if (config && typeof config === "object") {
         scrubbr = defaultScrubbr.clone(config);
       }
       return scrubbr.serialize(schemaName, data);
@@ -59,7 +59,8 @@ const scrubbrMiddleware =
     };
     res.send = (data: unknown) => {
       const serialized = serialize(data);
-      return sendFn.call(res, serialized);
+      const stringified = JSON.stringify(serialized); // avoids duplicate calls
+      return sendFn.call(res, stringified);
     };
     res.json = (data: unknown) => {
       const serialized = serialize(data);

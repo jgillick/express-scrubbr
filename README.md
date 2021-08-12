@@ -30,13 +30,12 @@ app.use(scrubbrMiddleware(scrubbr));
 Use it in your routes
 
 ```ts
- app.get('/users', (req, res) => {
-    const userData = fetchDataHere();
-
-    resp.status(200)
-        .scrubbr('UserList') // serialize userData with the UserList typescript type
-        .send(userData);
- }
+app.get('/users', (req, res) => {
+  const userData = fetchDataHere();
+  resp.status(200)
+    .scrubbr('UserList') // serialize userData with the UserList typescript type
+    .send(userData);
+}
 ```
 
 ## Setting route-level options

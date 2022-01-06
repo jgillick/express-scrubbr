@@ -58,6 +58,27 @@ customScrubbr.addTypeSerializer("User", userTransformer);
 resp.status(200).scrubbr("UserList", customScrubbr).send(userData);
 ```
 
+## Set global state
+
+The middleware will clone the scrubbr instance, so if you want to add global state you can do that through the express response locals object.
+
+For example, adding the authenticated user to the global state:
+
+```ts
+
+app.use(scrubbrMiddleware(scrubbr));
+
+// Auth middleware
+app.use((req, res, next) => {
+  const user = ... // do authy stuff here.
+
+  // Access the scrubbr instance on the response locals object
+  res.locals.scrubbr.setGlobalContext({ user }, true);
+})
+
+
+```
+
 # License
 
 [MIT](https://github.com/ajv-validator/ajv/blob/HEAD/LICENSE)

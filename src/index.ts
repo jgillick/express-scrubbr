@@ -25,23 +25,30 @@ type MiddlewareRequestValues = {
  *    .send(userData);
  *   }
  *
- * @param defaultScrubbr - The default scrubbr instance to use.
+ * @param initialScrubbr - The default scrubbr instance to be cloned for this request.
  */
 const scrubbrMiddleware =
-  (defaultScrubbr: Scrubbr) =>
+  (initialScrubbr: Scrubbr) =>
   (_req: Request, res: Response, next: NextFunction) => {
     const jsonFn = res.json;
 
+    // Clone scrubbr to prevent memory leaking between requests
+    res.locals.scrubbr = initialScrubbr.clone();
+
+    /**
+     * Serialize the data before sending (called by response.json() and response.send())
+     */
     const serialize = (data: unknown) => {
-      const scrubbrContext: MiddlewareRequestValues = res.locals.scrubbr || {};
+      const scrubbrContext: MiddlewareRequestValues =
+        res.locals._scrubbrContext || {};
       const { schemaName, config, serialized } = scrubbrContext;
 
-      // Already serialized
+      // The response has already been serialized
       if (serialized) {
         return data;
       }
-      res.locals.scrubbr = {
-        ...res.locals.scrubbr,
+      res.locals._scrubbrContext = {
+        ...scrubbrContext,
         serialized: true,
       };
 
@@ -50,23 +57,30 @@ const scrubbrMiddleware =
         return data;
       }
 
-      let scrubbr: Scrubbr = defaultScrubbr;
+      let scrubbr: Scrubbr = res.locals.scrubbr;
       if (config instanceof Scrubbr) {
         scrubbr = config;
       } else if (config && typeof config === "object") {
-        scrubbr = defaultScrubbr.clone(config);
+        scrubbr = scrubbr.clone(config);
       }
       return scrubbr.serialize(schemaName, data);
     };
 
+    /**
+     * Define the schema name to serialize to
+     */
     res.scrubbr = (schemaName: string, config?: Scrubbr | ScrubbrOptions) => {
-      res.locals.scrubbr = {
+      res.locals._scrubbrContext = {
         schemaName,
         config,
         serialized: false,
       };
       return res;
     };
+
+    /**
+     * Override the express json/send function to serialize the data before sending.
+     */
     res.json = (data: unknown) => {
       const serialized = serialize(data);
       return jsonFn.call(res, serialized);
